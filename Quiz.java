@@ -1,59 +1,85 @@
-package Fake;
-
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Random;
+import java.util.ArrayList;
 import java.util.Scanner;
 
-class Quiz{
-    public String Store1(int c , int d){
-        return set[c][d];
-    }
-    public String Store2(int c){
-        return temp[c] + ": ";
-    }
-    public String answer(int c){
-        return ans[c] ;
-    }
-    public int max(){
-        return fin;
-    }
-    String[] f = new String[20] ;
-    File file ;
-    String[] temp = new String[20];
-    int count = 0;
-    int fin ;
-    Scanner s;
-    String[] ans = new String[20];
-    String[][]set = new String[20][8];
-    public void loader(File f){
-        this.file = f;
-    }
-    public void start () throws FileNotFoundException {
-        s = new Scanner(file) ;
-        while (s.hasNext()) {
-            temp[count] = s.nextLine();
-            set[count][0] = s.nextLine();
-            set[count][1] = s.nextLine();
-            ans[count] = set[count][0];
-            if (set[1] != null && set[count][1] != "") {
-                f[count] = "true";
-                set[count][2] = s.nextLine();
-                set[count][3] = s.nextLine();
-                Random r = new Random();
-                for (int i = 3; i > 0; i--) {
-                    int j = r.nextInt(i+1);
-                    String temp = set[count][i];
-                    set[count][i] = set[count][j];
-                    set[count][j] = temp;
-                }
-                s.nextLine();
-            } else {
-                f[count] = "false";
-            }
-            count++;
-        }
-        fin = count;
+public class Quiz {
+    private String name;
+    private static ArrayList<Question> questions = new ArrayList<>();
 
+    public Quiz(){
+    }
+
+    public String getName() {
+
+        return name;
+    }
+
+    public void setName(String name) {
+
+        this.name = name;
+    }
+
+    public void addQuestion(Question q) {
+
+        questions.add(q);
+    }
+
+    public ArrayList<Question> getQuestions(){
+        return questions;
+    }
+    
+    //метод для того что бы разделить вопросы на два класса.
+    public static Quiz loadFromFile(String filename) throws FileNotFoundException, InvalidQuizFormatException {
+        Quiz quiz = new Quiz();
+
+        Scanner sc = new Scanner(new File(filename));
+        ArrayList<String> allText = new ArrayList<>();
+
+        while (sc.hasNextLine()){
+            allText.add(sc.nextLine());
+        }
+        allText.add("");
+
+        int count = 0;
+        for(int i=0;i<allText.size();i++){
+            if(allText.get(i).isEmpty()){
+                if(count==2){
+                    FillIn question = new FillIn();
+                    question.setDescription(allText.get(i-count));
+                    question.setAnswer(allText.get(i-count+1));
+                    quiz.addQuestion(question);
+                }
+
+                else if(count==Test.numbOfOptions+1){
+                    Test question = new Test();
+                    question.setDescription(allText.get(i-count));
+                    question.setAnswer(allText.get(i-count+1));
+                    
+                    String[] options = new String[Test.numbOfOptions];
+                    for(int j=1;j<=Test.numbOfOptions;j++){
+                        options[j-1] = allText.get(i-j);
+                    }
+                    question.setOptions(options);
+                    quiz.addQuestion(question);
+                }else{
+                    throw new InvalidQuizFormatException("Incorrect quiz format!");
+                }
+
+                count = 0;
+
+            }else{
+                count++;
+            }
+        }
+
+        return quiz;
+    }
+
+    //метод для того что бы запустить проект
+    public void start(){
+        for(Question q: questions){
+            q.makeUI();
+        }
     }
 }
